@@ -3,6 +3,8 @@ import yfinance as yf
 import pandas as pd
 
 # --- 1. INITIALIZATION ---
+
+
 if 'age' not in st.session_state:
     st.session_state.age = 30
 
