@@ -1,3 +1,7 @@
 streamlit
 pandas
-yfinance
+yfinance>=0.2.50
+curl_cffi
+langgraph
+langchain-openai
+python-dotenv
