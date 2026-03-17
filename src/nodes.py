@@ -142,7 +142,8 @@ def should_trigger_sync(db_path):
 # --- NODE 1: Analysis & Filtering ---
 
 def mf_analysis_node(state: AgentState):
-    db_path = "all_mf_database.parquet"
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(current_dir, "all_mf_database.parquet")
     df = pd.read_parquet(db_path)
 
     # 1. Grab the Top 50 funds based on 10Y Alpha
