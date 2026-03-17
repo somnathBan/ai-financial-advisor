@@ -1,0 +1,43 @@
+name: Daily Mutual Fund Sync
+
+on:
+  schedule:
+    # 18:30 UTC = 00:00 IST (12:00 AM)
+    - cron: '30 18 * * *'
+  workflow_dispatch: 
+
+jobs:
+  sync-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write 
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install pandas yfinance pyarrow fastparquet
+
+      - name: Run Sync Script
+        # 'working-directory' makes the bot enter 'src' before running the command
+        working-directory: ./src
+        run: |
+          python init_sync.py 
+
+      - name: Commit and Push Updated Database
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Pointing to the file inside src
+          git add src/all_mf_database.parquet
+          
+          git commit -m "Automated Daily Data Sync [Skip CI]" || exit 0
+          git push
