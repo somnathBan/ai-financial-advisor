@@ -29,6 +29,12 @@ jobs:
       - name: Run Sync Script
         # 'working-directory' makes the bot enter 'src' before running the command
         working-directory: ./src
+        env:
+          # This maps the GitHub Secret to the environment variable name
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # If your code also specifically checks for OPENAI_API_KEY, 
+          # you can map the same secret to both names just in case:
+          OPENAI_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           python init_sync.py 
 
