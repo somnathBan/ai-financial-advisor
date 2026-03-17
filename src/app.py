@@ -23,9 +23,10 @@ def update_slider():
 # --- 2. UI SETUP ---
 st.set_page_config(page_title="MF Alpha Architect", layout="wide")
 
-# PREMIUM INVESTMENT CSS
+# PREMIUM INVESTMENT CSS + MOBILE OPTIMIZATIONS
 st.markdown("""
     <style>
+    /* Global Styles */
     .stApp { background-color: #0E1117; color: #E0E0E0; }
     [data-testid="stSidebar"] { background-color: #050505; border-right: 1px solid #1E1E1E; }
     
@@ -61,6 +62,30 @@ st.markdown("""
     h1, h2, h3 { color: #FFFFFF !important; font-weight: 700; }
     .stButton>button { background-color: #04B488 !important; color: white !important; width: 100%; border-radius: 6px; font-weight: 600; }
     .stSpinner > div > div { border-top-color: #04B488 !important; }
+
+    /* --- MOBILE RESPONSIVENESS FIXES --- */
+    @media (max-width: 640px) {
+        /* Reduce header sizes on mobile */
+        h1 { font-size: 1.8rem !important; }
+        .stMarkdown p { font-size: 14px !important; }
+        
+        /* Adjust padding for small screens */
+        .block-container { padding: 1rem 1rem !important; }
+        
+        /* Highlight the sidebar 'Carrot' button for visibility */
+        button[kind="headerNoContext"] {
+            background-color: #04B488 !important;
+            border-radius: 50% !important;
+            color: black !important;
+            box-shadow: 0px 0px 10px rgba(4, 180, 136, 0.5);
+        }
+        
+        /* Make allocation bar labels smaller for small screens */
+        .equity-bar, .debt-bar { font-size: 0.7rem !important; }
+    }
+
+    /* Force visibility of text regardless of system dark mode */
+    p, span, label { color: #E0E0E0 !important; }
     </style>
     """, unsafe_allow_html=True) 
 
@@ -69,19 +94,18 @@ st.caption("Institutional Wealth Intelligence | AI Powered High-Performance Port
 
 # --- 3. SIDEBAR CONTROLS ---
 st.sidebar.header("Investor Profile")
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(current_dir, "all_mf_database.parquet")
+
 if os.path.exists(db_path):
-    # Get timestamp
     mtime = os.path.getmtime(db_path)
-    # Convert to IST (Asia/Kolkata)
     last_updated = datetime.fromtimestamp(mtime, tz=pytz.timezone('Asia/Kolkata'))
-    
-    # 3. Display in the sidebar with a nice icon
     st.sidebar.markdown("---")
     st.sidebar.caption(f"🕒 **Last Data Sync:** \n{last_updated.strftime('%d %b %Y | %I:%M %p')} IST")
 else:
     st.sidebar.warning("⚠️ Database not found")
+
 with st.sidebar.container():
     st.number_input("Age Input", 18, 100, step=1, key="age_num", on_change=update_slider)
     st.slider("Age Range", 18, 100, key="age_slider", on_change=update_num, label_visibility="collapsed")
@@ -99,19 +123,18 @@ if st.sidebar.button("Generate Strategic Portfolio", type="primary"):
         try:
             final_output = app_brain.invoke(inputs)
             
-            # --- A. TARGET ASSET ALLOCATION (CUSTOM WIDGET) ---
+            # --- A. TARGET ASSET ALLOCATION ---
             st.subheader("📊 Target Asset Allocation")
             split = final_output.get("portfolio_split", {"equity": 70, "debt": 30})
             e_p = split['equity']
             d_p = split['debt']
 
-            # Metrics Row
-            c1, c2, c3 = st.columns(3)
-            with c1: st.metric("Equity Target", f"{e_p}%")
-            with c2: st.metric("Debt/Hybrid Target", f"{d_p}%")
-            with c3: st.metric("Portfolio SIP", f"₹{user_amount:,.0f}")
+            # Use st.columns(1) on very small screens, 3 on large
+            c1, c2, c3 = st.columns([1, 1, 1])
+            c1.metric("Equity", f"{e_p}%")
+            c2.metric("Debt/Hybrid", f"{d_p}%")
+            c3.metric("Monthly SIP", f"₹{user_amount:,.0f}")
 
-            # CUSTOM 2-WAY ALLOCATION BAR
             st.markdown(f"""
                 <div class="allocation-container">
                     <div class="equity-bar" style="width: {e_p}%;">EQUITY {e_p}%</div>
@@ -129,16 +152,16 @@ if st.sidebar.button("Generate Strategic Portfolio", type="primary"):
 
             st.divider()
 
-            # --- C. MARKET INTELLIGENCE: TOP 200 ---
+            # --- C. MARKET INTELLIGENCE: TOP 20 ---
             st.subheader("📈 Other Funds That Could Be Considered")
             st.write("Beyond the AI's primary picks, these top 20 MFs represent funds with high Alpha")
             df_top = final_output["top_mf_recommendations"].sort_values('Alpha', ascending=False)
-            display_df = df_top[['Scheme', '10Y_Rolling_Median', 'Alpha']].head(20) # 🚀 SLICED TO TOP 20
+            display_df = df_top[['Scheme', '10Y_Rolling_Median', 'Alpha']].head(20)
             
             def apply_premium_heatmap(val):
-                if val >= 4.0: color = '#04B488'  # Accent Emerald
-                elif val >= 2.5: color = '#C9A227' # Gold
-                else: color = '#A63D40'            # Muted Crimson
+                if val >= 4.0: color = '#04B488'
+                elif val >= 2.5: color = '#C9A227'
+                else: color = '#A63D40'
                 return f'background-color: {color}; color: black; font-weight: 600;'
 
             styled_df = display_df.style.applymap(apply_premium_heatmap, subset=['Alpha'])
@@ -156,13 +179,12 @@ if st.sidebar.button("Generate Strategic Portfolio", type="primary"):
 
         except Exception as e:
             st.error(f"System Alert: {e}")
-
 else:
-    # Landing Page
+    # Landing Page - Simplified for Mobile
     st.markdown("""
-        <div style='padding: 60px; text-align: center; border: 1px solid #30363D; border-radius: 15px; background-color: #161B22;'>
-            <h1 style='font-size: 3.5rem; margin-bottom: 0;'>Welcome to Wealth Intelligence.</h1>
-            <p style='font-size: 1.2rem; color: #8B949E; margin-top: 10px;'>Precision-engineered portfolios derived from a decade of performance data.</p>
+        <div style='padding: 30px; text-align: center; border: 1px solid #30363D; border-radius: 15px; background-color: #161B22;'>
+            <h2 style='margin-bottom: 0;'>Welcome to Wealth Intelligence</h2>
+            <p style='color: #8B949E; margin-top: 10px;'>Precision-engineered portfolios derived from a decade of performance data.</p>
             <p style='color: #04B488; font-weight: 600; margin-top: 25px;'> 👈 Configure your profile in the Investor Profile pannel to begin.</p>
         </div>
     """, unsafe_allow_html=True)
