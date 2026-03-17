@@ -5,3 +5,9 @@ curl_cffi
 langgraph
 langchain-openai
 python-dotenv
+mftool
+pyarrow
+pytz
+numpy
+requests
+plotly

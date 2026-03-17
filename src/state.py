@@ -1,18 +1,13 @@
-# src/state.py
-from typing import TypedDict
+from typing import TypedDict, Dict
 import pandas as pd
 
 class AgentState(TypedDict):
-    # Inputs
     age: int
     risk: str
     amount: float
-    
-    # Internal Data
-    universe_data: pd.DataFrame
-    
-    # Outputs
-    portfolio_split: dict
-    recommendations_df: pd.DataFrame
+    # The 18-fund universe (6 Equity, 6 Debt, 6 Hybrid)
+    top_mf_recommendations: pd.DataFrame 
+    # System logic outputs
+    portfolio_split: Dict[str, float]
     ai_reasoning: str
     actual_model_used: str

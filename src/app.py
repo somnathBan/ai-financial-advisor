@@ -5,83 +5,148 @@ from graph import app_brain  # The Orchestrator
 # --- 1. INITIALIZATION & SESSION STATE ---
 if 'age' not in st.session_state:
     st.session_state.age = 30
+if 'age_num' not in st.session_state:
+    st.session_state.age_num = 30
+if 'age_slider' not in st.session_state:
+    st.session_state.age_slider = 30
 
 def update_num():
-    st.session_state.age_num = st.session_state.age_slider
     st.session_state.age = st.session_state.age_slider
+    st.session_state.age_num = st.session_state.age_slider
 def update_slider():
-    st.session_state.age_slider = st.session_state.age_num
     st.session_state.age = st.session_state.age_num
+    st.session_state.age_slider = st.session_state.age_num
 
 # --- 2. UI SETUP ---
-st.set_page_config(page_title="AI Financial Advisor MVP", layout="wide")
-st.title("🛡️ AI Financial Advisor")
-st.caption("Powered by LangGraph Multi-Agent Orchestration & Hunter Alpha")
+st.set_page_config(page_title="MF Alpha Architect", layout="wide")
+
+# PREMIUM INVESTMENT CSS
+st.markdown("""
+    <style>
+    .stApp { background-color: #0E1117; color: #E0E0E0; }
+    [data-testid="stSidebar"] { background-color: #050505; border-right: 1px solid #1E1E1E; }
+    
+    /* Allocation Bar Styling */
+    .allocation-container {
+        display: flex;
+        height: 40px;
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 20px 0;
+        border: 1px solid #30363D;
+    }
+    .equity-bar { background-color: #04B488; height: 100%; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 0.9rem; }
+    .debt-bar { background-color: #FFA000; height: 100%; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 0.9rem; }
+
+    .stMetric {
+        background-color: #161B22 !important;
+        border: 1px solid #30363D !important;
+        border-radius: 12px !important;
+        padding: 15px !important;
+    }
+    
+    div[data-testid="stVerticalBlock"] > div[style*="border"] {
+        background-color: #161B22 !important;
+        border: 1px solid #30363D !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+        color: white !important;
+    }
+
+    .stDataFrame { border: 1px solid #30363D !important; border-radius: 8px !important; }
+    h1, h2, h3 { color: #FFFFFF !important; font-weight: 700; }
+    .stButton>button { background-color: #04B488 !important; color: white !important; width: 100%; border-radius: 6px; font-weight: 600; }
+    .stSpinner > div > div { border-top-color: #04B488 !important; }
+    </style>
+    """, unsafe_allow_html=True) 
+
+st.title("💸 Wealth Intelligence: Your AI Assistant for Mutual Funds")
+st.caption("Institutional Wealth Intelligence | AI Powered High-Performance Portfolio")
 
 # --- 3. SIDEBAR CONTROLS ---
-st.sidebar.header("User Profile")
+st.sidebar.header("Investor Profile")
 with st.sidebar.container():
-    st.write("**Enter your age**")
-    st.number_input("Age Num", 18, 100, step=1, key="age_num", on_change=update_slider, label_visibility="collapsed")
-    st.slider("Age Slider", 18, 100, key="age_slider", on_change=update_num, label_visibility="collapsed")
+    st.number_input("Age Input", 18, 100, step=1, key="age_num", on_change=update_slider)
+    st.slider("Age Range", 18, 100, key="age_slider", on_change=update_num, label_visibility="collapsed")
 
-user_risk = st.sidebar.selectbox("Risk Appetite", ["Conservative", "Moderate", "Aggressive"])
-user_amount = st.sidebar.number_input("Investment Amount (₹)", min_value=1000, value=50000, step=1000)
+user_risk = st.sidebar.selectbox("Risk Profile", ["Conservative", "Moderate", "Aggressive"])
+user_amount = st.sidebar.number_input("Monthly SIP (₹)", min_value=1000, value=25000, step=1000)
 
 st.sidebar.divider()
 
-# --- 4. EXECUTION LAYER (The Trigger) ---
-if st.sidebar.button("Generate AI Strategy", type="primary"):
-    # Build initial state
-    inputs = {
-        "age": st.session_state.age,
-        "risk": user_risk,
-        "amount": user_amount
-    }
+# --- 4. EXECUTION LAYER ---
+if st.sidebar.button("Generate Strategic Portfolio", type="primary"):
+    inputs = {"age": st.session_state.age, "risk": user_risk, "amount": user_amount}
     
-    with st.spinner("🤖 Coordination in progress: Ingesting data & reasoning..."):
+    with st.spinner("🏗️ Architecting Portfolio & Analyzing 500+ Mutual Funds..."):
         try:
-            # A. Invoke the Graph (This runs all 3 nodes: Ingest -> Strategy -> Reasoning)
             final_output = app_brain.invoke(inputs)
             
-            # B. Extract results
-            e_p = final_output["portfolio_split"]["equity"]
-            d_p = final_output["portfolio_split"]["debt"]
-            e_v = (e_p / 100) * user_amount
-            d_v = (d_p / 100) * user_amount
-            df_market = final_output["recommendations_df"]
-            ai_reasoning = final_output.get("ai_reasoning", "Analysis unavailable.")
+            # --- A. TARGET ASSET ALLOCATION (CUSTOM WIDGET) ---
+            st.subheader("📊 Target Asset Allocation")
+            split = final_output.get("portfolio_split", {"equity": 70, "debt": 30})
+            e_p = split['equity']
+            d_p = split['debt']
 
-            # C. DISPLAY RESULTS
-            col_left, col_right = st.columns([1, 1.5])
+            # Metrics Row
+            c1, c2, c3 = st.columns(3)
+            with c1: st.metric("Equity Target", f"{e_p}%")
+            with c2: st.metric("Debt/Hybrid Target", f"{d_p}%")
+            with c3: st.metric("Portfolio SIP", f"₹{user_amount:,.0f}")
 
-            with col_left:
-                st.subheader("🎯 Portfolio Allocation")
-                st.metric("Equity Value", f"₹{e_v:,.0f}", f"{e_p}% Share")
-                st.metric("Debt Value", f"₹{d_v:,.0f}", f"{d_p}% Share")
-                st.progress(e_p / 100)
-                st.caption(f"Strategy: {user_risk} allocation based on Age {st.session_state.age}")
-
-            with col_right:
-                st.subheader(f"📊 Market Intelligence: {user_risk}")
-                st.table(df_market)
-                st.info("💡 Data sourced via Yahoo Finance API using real-time fundamental ratios.")
-
-            # --- D. THE REASONING BLOCK ---
+            # CUSTOM 2-WAY ALLOCATION BAR
+            st.markdown(f"""
+                <div class="allocation-container">
+                    <div class="equity-bar" style="width: {e_p}%;">EQUITY {e_p}%</div>
+                    <div class="debt-bar" style="width: {d_p}%;">DEBT/HYBRID {d_p}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
             st.divider()
-            st.subheader("🧠 AI Advisor's Analysis")
-            # We use a container to make the AI text stand out
-            with st.container():
-                st.markdown(f"**Personalized Strategy Memo:**")
-                # Display the reasoning text
-                st.write(final_output.get("ai_reasoning", "Analysis unavailable."))
-                
-                # Display the dynamic model name in the caption
-                model_used = final_output.get("actual_model_used", "Auto-Router")
-                st.caption(f"🛡️ Strategy verified by: **{model_used}**")
+
+            # --- B. AI ADVISOR RECOMMENDATION ---
+            st.subheader("🕵️‍♂️ Mutual Fund: Advisory Memo")
+            with st.container(border=True):
+                st.markdown(final_output.get("ai_reasoning", "Analysis unavailable."))
+                st.caption(f"Governance Model: {final_output.get('actual_model_used', 'Hunter-Alpha')}")
+
+            st.divider()
+
+            # --- C. MARKET INTELLIGENCE: TOP 200 ---
+            st.subheader("📈 Other Funds That Could Be Considered")
+            st.write("Beyond the AI's primary picks, these top 20 MFs represent funds with high Alpha")
+            df_top = final_output["top_mf_recommendations"].sort_values('Alpha', ascending=False)
+            display_df = df_top[['Scheme', '10Y_Rolling_Median', 'Alpha']].head(20) # 🚀 SLICED TO TOP 20
+            
+            def apply_premium_heatmap(val):
+                if val >= 4.0: color = '#04B488'  # Accent Emerald
+                elif val >= 2.5: color = '#C9A227' # Gold
+                else: color = '#A63D40'            # Muted Crimson
+                return f'background-color: {color}; color: black; font-weight: 600;'
+
+            styled_df = display_df.style.applymap(apply_premium_heatmap, subset=['Alpha'])
+            
+            st.dataframe(
+                styled_df,
+                column_config={
+                    "Scheme": st.column_config.TextColumn("Fund Identity", width="large"),
+                    "10Y_Rolling_Median": st.column_config.NumberColumn("10Y Median", format="%.2f%%"),
+                    "Alpha": st.column_config.NumberColumn("Alpha", format="%.2f%%")
+                },
+                hide_index=True,
+                use_container_width=True
+            )
 
         except Exception as e:
-            st.error(f"Graph Execution Error: {e}")
-            st.warning("Ensure that your OpenRouter Key is active and your nodes are returning the correct keys.")
+            st.error(f"System Alert: {e}")
+
 else:
-    st.info("👈 Adjust your profile in the sidebar and click 'Generate AI Strategy' to run the agentic workflow.")
+    # Landing Page
+    st.markdown("""
+        <div style='padding: 60px; text-align: center; border: 1px solid #30363D; border-radius: 15px; background-color: #161B22;'>
+            <h1 style='font-size: 3.5rem; margin-bottom: 0;'>Welcome to Wealth Intelligence.</h1>
+            <p style='font-size: 1.2rem; color: #8B949E; margin-top: 10px;'>Precision-engineered portfolios derived from a decade of performance data.</p>
+            <p style='color: #04B488; font-weight: 600; margin-top: 25px;'> 👈 Configure your profile in the Investor Profile pannel to begin.</p>
+        </div>
+    """, unsafe_allow_html=True)
