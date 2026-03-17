@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+import pytz
+from datetime import datetime, timedelta
+import os
 from graph import app_brain  # The Orchestrator
 
 # --- 1. INITIALIZATION & SESSION STATE ---
@@ -66,6 +69,19 @@ st.caption("Institutional Wealth Intelligence | AI Powered High-Performance Port
 
 # --- 3. SIDEBAR CONTROLS ---
 st.sidebar.header("Investor Profile")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(current_dir, "all_mf_database.parquet")
+if os.path.exists(db_path):
+    # Get timestamp
+    mtime = os.path.getmtime(db_path)
+    # Convert to IST (Asia/Kolkata)
+    last_updated = datetime.fromtimestamp(mtime, tz=pytz.timezone('Asia/Kolkata'))
+    
+    # 3. Display in the sidebar with a nice icon
+    st.sidebar.markdown("---")
+    st.sidebar.caption(f"🕒 **Last Data Sync:** \n{last_updated.strftime('%d %b %Y | %I:%M %p')} IST")
+else:
+    st.sidebar.warning("⚠️ Database not found")
 with st.sidebar.container():
     st.number_input("Age Input", 18, 100, step=1, key="age_num", on_change=update_slider)
     st.slider("Age Range", 18, 100, key="age_slider", on_change=update_num, label_visibility="collapsed")
