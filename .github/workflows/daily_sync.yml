@@ -23,7 +23,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install pandas yfinance pyarrow fastparquet
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Run Sync Script
         # 'working-directory' makes the bot enter 'src' before running the command
