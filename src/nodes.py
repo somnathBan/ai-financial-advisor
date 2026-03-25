@@ -15,7 +15,7 @@ mf = Mftool()
 api_key = os.getenv("OPENROUTER_API_KEY")
 
 llm = ChatOpenAI(
-    model="openrouter/hunter-alpha",
+    model="nvidia/nemotron-3-super-120b-a12b",
     openai_api_key=api_key,
     base_url="https://openrouter.ai/api/v1",
     default_headers={
